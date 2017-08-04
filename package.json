@@ -1,0 +1,18 @@
+{
+  "name": "so-angular-tag-editor",
+  "version": "1.0.0",
+  "description": "utility tool to remove tags from questions where both tags 'angular' and 'angularjs' are used but only one version is referenced.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "so",
+    "stackoverflow",
+    "angular",
+    "angularjs",
+    "tags"
+  ],
+  "author": "Kim Kern <github@kimkern.de>",
+  "license": "ISC"
+}
