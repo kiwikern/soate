@@ -24,6 +24,8 @@ class TagEditor {
 		return isDone; 
 	}
 
+/* ==== PRIVATE ==== */
+
 	hasError() {
 		const errorLinks = Array.from(this.document.querySelectorAll('#question a.js-error-click'));
 		return errorLinks.map(a => a.innerText).includes('edit');

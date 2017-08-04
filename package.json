@@ -4,7 +4,11 @@
   "description": "utility tool to remove tags from questions where both tags 'angular' and 'angularjs' are used but only one version is referenced.",
   "main": "index.js",
   "scripts": {
+    "start": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bin": {
+    "edit-tags": "./index.js"
   },
   "keywords": [
     "so",
@@ -14,5 +18,11 @@
     "tags"
   ],
   "author": "Kim Kern <github@kimkern.de>",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "chalk": "^2.0.1",
+    "figlet": "^1.2.0",
+    "inquirer": "^3.2.1",
+    "opn": "^5.1.0"
+  }
 }
