@@ -1,36 +1,40 @@
 const log = require('./logger').getLogger('EditLoop');
-const TagEditor = require('./tag-editor');
 const fs = require('fs');
+const Driver = require('./browser-driver');
 
 class EditLoop {
 
-	constructor() {
+    constructor() {
         log.debug('constructor');
         this.classifications = this.getClassifications();
-        this.tagEditor = new TagEditor();
-	}
+        this.driver = new Driver();
+    }
 
-	startEditing() {
+    init(email, password) {
+        log.debug('init');
+        return this.driver.login(email, password);
+    }
+
+    startEditing() {
         log.debug('startEditing');
         if (!Array.isArray(this.classifications) || this.classifications.length < 1) {
             console.log('No classified questions.');
             return;
         }
-        this.tagEditor.init()
-            .then(() => this.startLooping());
+        this.startLooping();
     }
-    
+
     startLooping() {
         log.debug('startLooping');
         let count = 0;
-        while(this.classifications && this.classifications.length > 0) {
-            log.debug('startLooping', {count});            
-            if (count >= 1) {
+        while (this.classifications && this.classifications.length > count) {
+            log.debug('startLooping', { count });
+            if (count >= 5) {
                 this.setEditingTimeout();
                 return;
             } else {
                 count++;
-                this.performEdits(this.classifications[0]);
+                this.performEdits(this.classifications[count]);
             }
         }
         console.log('All classified questions were edited.');
@@ -40,12 +44,11 @@ class EditLoop {
     }
 
     performEdits(classification) {
-        log.debug('performEdits', {classification});
-        return this.tagEditor.editTag(classification.id, classification.tagToBeRemoved)
+        log.debug('performEdits', { classification });
+        return this.driver.editQuestion(classification.id, classification.tagToBeRemoved)
             .then(isDone => {
                 if (isDone) {
-                    this.classifications.splice(0, 1);
-                    this.setClassifications();
+                    this.removeFirstClassification();
                 } else {
                     this.setEditingTimeout();
                 }
@@ -69,9 +72,11 @@ class EditLoop {
         return classifications
     }
 
-    setClassifications() {
-        log.debug('setClassifications', this.classifications);
+    removeFirstClassification() {
+        const removed = this.classifications.splice(0, 1);
+        log.debug('removeFirstClassification', {removed});
         if (Array.isArray(this.classifications)) {
+            const path = './classifications.json';
             fs.writeFileSync(path, JSON.stringify(this.classifications, null, 4));
         }
     }

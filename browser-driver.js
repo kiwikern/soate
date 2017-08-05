@@ -1,7 +1,6 @@
 const selenium = require('selenium-webdriver');
 const By = selenium.By;
 const until = selenium.until;
-const map = selenium.map;
 const log = require('./logger').getLogger('BrowserDriver');
 
 class BrowserDriver {
@@ -19,29 +18,26 @@ class BrowserDriver {
 		this.driver.findElement(By.id('email')).sendKeys(email);
 		this.driver.findElement(By.id('password')).sendKeys(password);
 		this.driver.findElement(By.id('submit-button')).click();
-		this.driver.wait(until.titleIs('Stack Overflow'));
-	}
-
-	editQuestion(questionId, tagToBeDeleted) {
-		this.driver.get(`https://stackoverflow.com/questions/${questionId}`);
-		this.editTag(tagToBeDeleted);
+		return this.driver.wait(until.titleIs('Stack Overflow'));
 	}
 
 	/**
 	* Deletes given tagToBeDeleted (either 'angular' or 'angularjs'), if question has both tags 
 	* and there are no errors prohibiting question edits (e.g. too many edits in queue).
 	*/
-	editTag(tagNameToBeDeleted) {
+	editQuestion(questionId, tagToBeDeleted) {
+		const url = `https://stackoverflow.com/questions/${questionId}`;
+		this.driver.get(url);
 		return this.hasError()
-			.then(() => this.clickOnEdit())
+			.then(() => this.driver.get(url + '/edit'))
 			.then(() => this.hasBothTags())
 			.then(() => this.deleteTag(tagNameToBeDeleted))
 			.then(() => this.setSummary(tagNameToBeDeleted))
 			.then(() => this.submit())
 			.catch(result => {
 				log.debug('editTag: caught rejection', {result});
+				return result;
 			});
-
 	}
 
 	hasError() {
@@ -77,11 +73,6 @@ class BrowserDriver {
 					return Promise.reject(true)
 				}
 			});
-	}
-
-	clickOnEdit() {
-		log.debug('clickOnEdit');
-		return this.driver.findElement(By.css('#question .suggest-edit-post')).click();
 	}
 
 	deleteTag(tagName) {

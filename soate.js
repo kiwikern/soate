@@ -5,6 +5,7 @@ const opn = require('opn');
 const fs = require('fs');
 const Classifier = require('./classifier');
 const EditLoop = require('./edit-loop');
+const secrets = require('./secrets.json');
 
 class Soate {
 
@@ -22,7 +23,7 @@ class Soate {
         );
         console.log(
             chalk.cyan(
-`View Stackoverflow questions that have both tags "angular" and "angularjs".
+                `View Stackoverflow questions that have both tags "angular" and "angularjs".
 For each of them, mark one or none of the tags to be removed, then start auto removal.\n\n`)
         );
     }
@@ -39,7 +40,8 @@ For each of them, mark one or none of the tags to be removed, then start auto re
                     return;
                 } else {
                     const editLoop = new EditLoop();
-                    editLoop.startEditing();
+                    editLoop.init(secrets.email, secrets.password)
+                        .then(editLoop.startEditing());
                 }
             })
     }
