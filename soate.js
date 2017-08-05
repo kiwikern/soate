@@ -41,7 +41,7 @@ For each of them, mark one or none of the tags to be removed, then start auto re
                 } else {
                     const editLoop = new EditLoop();
                     editLoop.init(secrets.email, secrets.password)
-                        .then(editLoop.startEditing());
+                        .then(() => editLoop.startEditing());
                 }
             })
     }

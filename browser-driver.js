@@ -26,10 +26,9 @@ class BrowserDriver {
 	* and there are no errors prohibiting question edits (e.g. too many edits in queue).
 	*/
 	editQuestion(questionId, tagToBeDeleted) {
-		const url = `https://stackoverflow.com/questions/${questionId}`;
-		this.driver.get(url);
+		this.driver.get(`https://stackoverflow.com/questions/${questionId}`);
 		return this.hasError()
-			.then(() => this.driver.get(url + '/edit'))
+			.then(() => this.driver.get(`https://stackoverflow.com/posts/${questionId}/edit`))
 			.then(() => this.hasBothTags())
 			.then(() => this.deleteTag(tagNameToBeDeleted))
 			.then(() => this.setSummary(tagNameToBeDeleted))
@@ -55,7 +54,9 @@ class BrowserDriver {
 
 	getTags() {
 		log.debug('getTags');
-		return this.driver.findElements(By.css('span.post-tag'));
+		const tags = this.driver.findElements(By.css('span.post-tag'));
+		tags.then(t => log.debug(`found ${t.length} tags`));
+		return tags;
 	}
 
 	hasBothTags() {
@@ -63,7 +64,10 @@ class BrowserDriver {
 		return this.getTags()
 			.then(tags => tags.map(span => span.getText()))
 			.then(tagNames => Promise.all(tagNames))
-			.then(tagNames => tagNames.includes('angular') && tagNames.includes('angularjs'))
+			.then(tagNames => {
+				log.error(tagNames);
+				return tagNames.includes('angular') && tagNames.includes('angularjs')
+			})
 			.then(result => {
 				if (result) {
 					log.debug('has both tags');

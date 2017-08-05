@@ -27,6 +27,7 @@ class EditLoop {
     startLooping() {
         log.debug('startLooping');
         let count = 0;
+        let promise = Promise.resolve();
         while (this.classifications && this.classifications.length > count) {
             log.debug('startLooping', { count });
             if (count >= 5) {
@@ -34,7 +35,12 @@ class EditLoop {
                 return;
             } else {
                 count++;
-                this.performEdits(this.classifications[count]);
+                promise = promise
+                    .then(() => this.performEdits(this.classifications[count]))
+                    .catch(() => {
+                        this.setEditingTimeout();
+                        return;
+                    });
             }
         }
         console.log('All classified questions were edited.');
@@ -49,8 +55,9 @@ class EditLoop {
             .then(isDone => {
                 if (isDone) {
                     this.removeFirstClassification();
+                    return Promise.resolve();
                 } else {
-                    this.setEditingTimeout();
+                    return Promise.reject();
                 }
             });
     }
