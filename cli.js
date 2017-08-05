@@ -25,6 +25,15 @@ class CLI {
         }];
         return inquirer.prompt(questions);
     }
+
+    cancelAutoRemoval() {
+        const questions = [{
+            name: 'cancel-autoremoval',
+            type: 'confirm',
+            message: `Auto tag removal in progress. Do you want to cancel?`
+        }];
+        return inquirer.prompt(questions);
+    }
 }
 
 module.exports = CLI;

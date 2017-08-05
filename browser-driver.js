@@ -6,15 +6,24 @@ const log = require('./logger').getLogger('BrowserDriver');
 class BrowserDriver {
 
 	constructor() {
+		log.debug('constructor()');
 		this.driver = new selenium.Builder()
 			.forBrowser('chrome')
 			.build();
 	}
 
 	login(email, password) {
-		log.debug('login', { email });
+		log.debug('login()', { email });
 		const url = 'https://stackoverflow.com/users/login';
 		this.driver.get(url);
+		return this.driver.findElement(By.css('body')).getText()
+			.then(text => text.includes('You are already logged in') ? Promise.reject() : Promise.resolve())
+			.then(() => this.performLogin(email, password))
+			.catch(() => log.debug('You are currently logged in'));
+	}
+
+	performLogin(email, password) {
+		log.debug('performLogin()', { email });
 		this.driver.findElement(By.id('email')).sendKeys(email);
 		this.driver.findElement(By.id('password')).sendKeys(password);
 		this.driver.findElement(By.id('submit-button')).click();
@@ -26,6 +35,7 @@ class BrowserDriver {
 	* and there are no errors prohibiting question edits (e.g. too many edits in queue).
 	*/
 	editQuestion(questionId, tagToBeDeleted) {
+		log.debug('editQuestion()', {questionId, tagToBeDeleted});
 		this.driver.get(`https://stackoverflow.com/questions/${questionId}`);
 		return this.hasError()
 			.then(() => this.driver.get(`https://stackoverflow.com/posts/${questionId}/edit`))
@@ -85,7 +95,7 @@ class BrowserDriver {
 
 	deleteTag(tagName) {
 		log.debug('deleteTag');
-		this.driver.findElement(By.xpath(`//*[text() = "${tagName}"]/span`)).click();
+		return this.driver.findElement(By.xpath(`//*[text() = "${tagName}"]/span`)).click();
 	}
 
 	setSummary(tagNameToBeDeleted) {
@@ -96,12 +106,17 @@ class BrowserDriver {
 		} else {
 			summary = 'removed angularjs tag, should only be used for Angular 1.x';
 		}
-		this.driver.findElement(By.id('edit-comment')).sendKeys(summary);
+		return this.driver.findElement(By.id('edit-comment')).sendKeys(summary);
 	}
 
 	submit() {
 		log.debug('submit');
-		this.driver.findElement(By.id('submit-button')).click();
+		return this.driver.findElement(By.id('submit-button')).click();
+	}
+
+	close() {
+		log.debug('close()')
+		this.driver.close();
 	}
 }
 
