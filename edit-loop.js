@@ -37,7 +37,7 @@ class EditLoop {
             if (count > 5) {
                 return promise.then(() => this.setEditingTimeout());
             }
-            }
+        }
         console.log('All classified questions were edited.');
     }
 
@@ -46,7 +46,7 @@ class EditLoop {
         return this.driver.editQuestion(classification.id, classification.tagToBeRemoved)
             .then(isDone => {
                 if (isDone) {
-                    this.removeFirstClassification();
+                    this.removeFirstClassification(classification.id);
                     return Promise.resolve();
                 } else {
                     return Promise.reject();
@@ -56,6 +56,7 @@ class EditLoop {
 
     setEditingTimeout() {
         log.debug('setEditingTimeout');
+        clearTimeout(this.timeout);
         return new Promise(resolve => {
             this.timeout = setTimeout(() => {
                 log.debug('timeout fulfilled');
@@ -77,10 +78,11 @@ class EditLoop {
         return classifications
     }
 
-    removeFirstClassification() {
-        const removed = this.classifications.splice(0, 1);
-        log.debug('removeFirstClassification', {removed});
-        if (Array.isArray(this.classifications)) {
+    removeFirstClassification(classificationId) {
+        log.debug('removeFirstClassification', {classificationId});
+        if (Array.isArray(this.classifications) && this.classifications[0] && this.classifications[0].id === classificationId) {
+            const removed = this.classifications.splice(0, 1);
+            log.debug('removeFirstClassification', {removed});
             const path = './classifications.json';
             fs.writeFileSync(path, JSON.stringify(this.classifications, null, 4));
         }
