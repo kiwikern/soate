@@ -36,7 +36,7 @@ class EditLoop {
             } else {
                 count++;
                 promise = promise
-                    .then(() => this.performEdits(this.classifications[count]))
+                    .then(() => this.performEdits(this.classifications[0]))
                     .catch(() => {
                         this.setEditingTimeout();
                         return;

@@ -71,10 +71,10 @@ class BrowserDriver {
 			.then(result => {
 				if (result) {
 					log.debug('has both tags');
-					return Promise.resolve()
+					return Promise.resolve(true);
 				} else {
 					log.debug('does not have both tags anymore.');
-					return Promise.reject(true)
+					return Promise.reject(true);
 				}
 			});
 	}
