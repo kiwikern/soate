@@ -30,23 +30,15 @@ class EditLoop {
         let promise = Promise.resolve();
         while (this.classifications && this.classifications.length > count) {
             log.debug('startLooping', { count });
-            if (count >= 5) {
-                this.setEditingTimeout();
-                return;
-            } else {
-                count++;
-                promise = promise
-                    .then(() => this.performEdits(this.classifications[0]))
-                    .catch(() => {
-                        this.setEditingTimeout();
-                        return;
-                    });
+            count++;
+            promise = promise
+                .then(() => this.performEdits(this.classifications[0]))
+                .catch(() => this.setEditingTimeout());
+            if (count > 5) {
+                return promise.then(() => this.setEditingTimeout());
             }
-        }
+            }
         console.log('All classified questions were edited.');
-        if (this.timeout) {
-            this.timeout.clear();
-        }
     }
 
     performEdits(classification) {
@@ -64,7 +56,13 @@ class EditLoop {
 
     setEditingTimeout() {
         log.debug('setEditingTimeout');
-        this.timeout = setTimeout(() => this.startEditing, 60000);
+        return new Promise(resolve => {
+            this.timeout = setTimeout(() => {
+                log.debug('timeout fulfilled');
+                this.startEditing();
+                return resolve();
+            }, 3600000);
+        });
     }
 
     getClassifications() {

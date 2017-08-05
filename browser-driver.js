@@ -43,11 +43,11 @@ class BrowserDriver {
 		log.debug('hasError()');
 		return this.driver.findElements(By.css('#question a.js-error-click'))
 			.then(links => {
-					log.debug('found links', {links});
+					log.debug('found links', links.length);
 				if (links.length === 0) {
 					return Promise.resolve();
 				} else {
-					Promise.reject(false);
+					return Promise.reject(false);
 				}
 			});
 	}
@@ -65,7 +65,11 @@ class BrowserDriver {
 			.then(tags => tags.map(span => span.getText()))
 			.then(tagNames => Promise.all(tagNames))
 			.then(tagNames => {
-				log.error(tagNames);
+				log.debug('found tags', tagNames);
+				if (tagNames.length === 0) {
+					log.debug('no tags found');
+					return Promise.reject(false);
+				}
 				return tagNames.includes('angular') && tagNames.includes('angularjs')
 			})
 			.then(result => {
