@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const Soate = require('./soate');
-const soQuestions = require('./so-questions')
+const api = require('./so-api');
 
-new Soate(soQuestions);
+new Soate();
 

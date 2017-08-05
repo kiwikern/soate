@@ -21,6 +21,7 @@
   "license": "ISC",
   "dependencies": {
     "chalk": "^2.0.1",
+    "express": "^4.15.3",
     "figlet": "^1.2.0",
     "inquirer": "^3.2.1",
     "opn": "^5.1.0"
