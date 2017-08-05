@@ -30,8 +30,8 @@ class BrowserDriver {
 		return this.hasError()
 			.then(() => this.driver.get(`https://stackoverflow.com/posts/${questionId}/edit`))
 			.then(() => this.hasBothTags())
-			.then(() => this.deleteTag(tagNameToBeDeleted))
-			.then(() => this.setSummary(tagNameToBeDeleted))
+			.then(() => this.deleteTag(tagToBeDeleted))
+			.then(() => this.setSummary(tagToBeDeleted))
 			.then(() => this.submit())
 			.catch(result => {
 				log.debug('editTag: caught rejection', {result});
@@ -71,7 +71,7 @@ class BrowserDriver {
 			.then(result => {
 				if (result) {
 					log.debug('has both tags');
-					return Promise.resolve(true);
+					return Promise.resolve();
 				} else {
 					log.debug('does not have both tags anymore.');
 					return Promise.reject(true);
