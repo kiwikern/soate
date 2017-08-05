@@ -8,6 +8,7 @@ class EditLoop {
         log.debug('constructor');
         this.classifications = this.getClassifications();
         this.driver = new Driver();
+        this.promise = Promise.resolve();
     }
 
     init(email, password) {
@@ -27,15 +28,14 @@ class EditLoop {
     startLooping() {
         log.debug('startLooping');
         let count = 0;
-        let promise = Promise.resolve();
         while (this.classifications && this.classifications.length > count) {
             log.debug('startLooping', { count });
             count++;
-            promise = promise
+            this.promise = this.promise
                 .then(() => this.performEdits(this.classifications[0]))
                 .catch(() => this.setEditingTimeout());
             if (count > 5) {
-                return promise.then(() => this.setEditingTimeout());
+                return this.promise.then(() => this.setEditingTimeout());
             }
         }
         console.log('All classified questions were edited.');
