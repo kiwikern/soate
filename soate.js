@@ -4,6 +4,7 @@ const CLI = require('./cli');
 const opn = require('opn');
 const fs = require('fs');
 const Classifier = require('./classifier');
+const EditLoop = require('./edit-loop');
 
 class Soate {
 
@@ -37,7 +38,8 @@ For each of them, mark one or none of the tags to be removed, then start auto re
                 } else if (mode === 'quit') {
                     return;
                 } else {
-                    console.log('Start auto stuff');
+                    const editLoop = new EditLoop();
+                    editLoop.startEditing();
                 }
             })
     }
