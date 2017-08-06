@@ -103,7 +103,7 @@ class EditLoop {
 
     removeFirstClassification(classificationId) {
         log.debug('removeFirstClassification()', {classificationId});
-        if (Array.isArray(this.classifications) && this.classifications[0] && this.classifications[0].id === classificationId) {
+        if (this.classifications[this.classificationIndex] && this.classifications[this.classificationIndex].id === classificationId) {
             const removed = this.classifications.splice(0, 1);
             log.debug('removeFirstClassification()', {removed});
             const path = './classifications.json';
