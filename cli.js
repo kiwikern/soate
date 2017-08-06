@@ -3,7 +3,12 @@ const inquirer = require('inquirer');
 class CLI {
 
     selectMode() {
-        const choices = ['auto tag removal', 'classification', 'quit'];
+        const choices = [
+            {value:'tagremoval', name:'Automatically remove tags from the questions you have classified.', short:'remove tags'}, 
+            {value:'classification', name:'Classify questions whether tag removal is neccessary.', short:'classify questions'}, 
+            {value:'reset', name:'Reset your Stackoverflow credentials.', short:'reset credentials'}, 
+            {value:'quit', name:'Quit soate.', short:'quit'}
+        ];
         const questions = [{
             name: 'mode-select',
             type: 'list',
@@ -32,6 +37,33 @@ class CLI {
             type: 'confirm',
             message: `Auto tag removal in progress. Do you want to cancel?`
         }];
+        return inquirer.prompt(questions);
+    }
+
+    getEmail() {
+        const questions = [{
+            name: 'email',
+            type: 'input',
+            validate: email => email && email.length > 4 && email.includes('@'),
+            message: `What is your Stackoverflow mail address?`
+        }];
+        return inquirer.prompt(questions);
+    }
+
+    getPassword() {
+        const questions = [{
+            name: 'password',
+            type: 'password',
+            validate: password => password && password.length > 6,
+            message: `What is your Stackoverflow password?`
+        },
+        {
+            name: 'savepassword',
+            type: 'confirm',
+            default: false,
+            message: 'Do you want to store (caution, cleartext!) your password locally?'
+        }
+    ];
         return inquirer.prompt(questions);
     }
 }

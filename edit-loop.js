@@ -9,12 +9,13 @@ class EditLoop {
         this.wasCanceled = false;
         this.classifications = this.getClassifications();
         this.count = 0;
+        this.classificationIndex = 0;
         this.driver = new Driver();
     }
 
     init(email, password) {
         log.debug('init()', {email});
-        return this.driver.login(email, password);
+        return this.driver.login(email, password).catch(() => Promise.reject());
     }
 
     startEditing() {
@@ -37,7 +38,7 @@ class EditLoop {
             return this.setEditingTimeout();
         }
         this.count++;
-        return this.performEdits(this.classifications[0])
+        return this.performEdits(this.classifications[this.classificationIndex])
             .then(() => this.startEditing())
             .catch(() => this.setEditingTimeout());
     }
@@ -47,7 +48,13 @@ class EditLoop {
         return this.driver.editQuestion(classification.id, classification.tagToBeRemoved)
             .then(isDone => {
                 if (isDone) {
-                    this.removeFirstClassification(classification.id);
+                    if (isDone !== 'skip') {
+                        console.log(`\nSuccessfully removed tag ${classification.tagToBeRemoved}.\n`);
+                        this.removeFirstClassification(classification.id);
+                    } else {
+                        console.log('\nSkipped a question.\n')
+                        this.classificationIndex++;
+                    }
                     return Promise.resolve();
                 } else {
                     log.debug('performEdits() unsuccessful');
@@ -58,6 +65,7 @@ class EditLoop {
 
     setEditingTimeout() {
         log.debug('setEditingTimeout()');
+        console.log('\nEdit queues are full. Retrying in 1h.\n')
         this.count = 0;
         clearTimeout(this.timeout);
         if (this.wasCanceled) {

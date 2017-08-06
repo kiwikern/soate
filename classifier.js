@@ -9,7 +9,7 @@ class Classifier {
         this.threads = JSON.parse(fs.readFileSync('./so-questions.json'));
     }
     
-    startClassification(index) {
+    startClassification(index = 0) {
         console.log('\nOpening Stackoverflow question in your browser...\n');
         opn('https://stackoverflow.com/questions/' + this.threads[index]);
         return this.cli.checkTags().then(result => {

@@ -1,5 +1,5 @@
 const winston = require('winston');
-const level = 'debug';
+const level = 'warn';
 exports.getLogger = (label) => {
   const logger = new (winston.Logger)({
     transports: [

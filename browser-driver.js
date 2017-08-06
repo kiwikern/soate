@@ -18,16 +18,15 @@ class BrowserDriver {
 		this.driver.get(url);
 		return this.driver.findElement(By.css('body')).getText()
 			.then(text => text.includes('You are already logged in') ? Promise.reject() : Promise.resolve())
-			.then(() => this.performLogin(email, password))
-			.catch(() => log.debug('You are currently logged in'));
+			.then(() => this.performLogin(email, password));
 	}
 
 	performLogin(email, password) {
 		log.debug('performLogin()', { email });
 		this.driver.findElement(By.id('email')).sendKeys(email);
 		this.driver.findElement(By.id('password')).sendKeys(password);
-		this.driver.findElement(By.id('submit-button')).click();
-		return this.driver.wait(until.titleIs('Stack Overflow'));
+		this.driver.findElement(By.id('submit-button')).click()
+		return this.driver.wait(until.elementLocated(By.css('.my-profile')));
 	}
 
 	/**
@@ -37,12 +36,13 @@ class BrowserDriver {
 	editQuestion(questionId, tagToBeDeleted) {
 		log.debug('editQuestion()', {questionId, tagToBeDeleted});
 		this.driver.get(`https://stackoverflow.com/questions/${questionId}`);
-		return this.hasError()
-			.then(() => this.driver.get(`https://stackoverflow.com/posts/${questionId}/edit`))
+		return this.driver.get(`https://stackoverflow.com/posts/${questionId}/edit`)
+			.then(() => this.hasError())
 			.then(() => this.hasBothTags())
 			.then(() => this.deleteTag(tagToBeDeleted))
 			.then(() => this.setSummary(tagToBeDeleted))
 			.then(() => this.submit())
+			.then(() => true)
 			.catch(result => {
 				log.debug('editTag: caught rejection', {result});
 				return result;
@@ -51,15 +51,16 @@ class BrowserDriver {
 
 	hasError() {
 		log.debug('hasError()');
-		return this.driver.findElements(By.css('#question a.js-error-click'))
-			.then(links => {
-					log.debug('found links', links.length);
-				if (links.length === 0) {
-					return Promise.resolve();
-				} else {
+		return this.driver.findElement(By.css('body'))
+			.then(body => body.getText())
+			.then(text => {
+				if (text.includes(`There is a pending suggested edit in the queue`)) {
+					return Promise.reject('skip');
+				} else if (text.includes(`You have too many pending edits.`)) {
 					return Promise.reject(false);
 				}
-			});
+				else return Promise.resolve();
+			})
 	}
 
 	getTags() {

@@ -2,10 +2,10 @@ const figlet = require('figlet');
 const chalk = require('chalk');
 const CLI = require('./cli');
 const opn = require('opn');
-const fs = require('fs');
 const Classifier = require('./classifier');
 const EditLoop = require('./edit-loop');
-const secrets = require('./secrets.json');
+const CredentialsManager = require('./credentials-manager');
+const log = require('./logger').getLogger('Soate');
 
 class Soate {
 
@@ -13,6 +13,7 @@ class Soate {
         this.cli = new CLI();
         this.showWelcome();
         this.startCLI();
+        this.credentialManager = new CredentialsManager();
     }
 
     showWelcome() {
@@ -32,22 +33,89 @@ For each of them, mark one or none of the tags to be removed, then start auto re
         this.cli.selectMode()
             .then(result => {
                 console.log('\n');
-                const mode = result['mode-select'];
-                if (mode === 'classification') {
-                    const classifier = new Classifier();
-                    classifier.startClassification(0).then(() => this.startCLI());
-                } else if (mode === 'quit') {
-                    return;
-                } else {
-                    const editLoop = new EditLoop();
-                    editLoop.init(secrets.email, secrets.password)
-                        .then(() => editLoop.startEditing());
-                    this.cli.cancelAutoRemoval()
-                        .then(() => editLoop.cancel())
-                        .then(() => console.log('\n'))
-                        .then(() => this.startCLI());
-                }
-            })
+                return result['mode-select'];
+            }).then(mode => this.selectMode(mode));
+    }
+
+    selectMode(mode) {
+        switch(mode) {
+            case 'classification':
+                this.startClassification();
+                break;
+            case 'tagremoval':
+                this.startAutoTagRemoval();
+                break;
+            case 'reset':
+                this.credentialManager.resetCredentials();
+                this.startCLI();
+                break;  
+            case 'quit':
+            default:
+                return console.log(chalk.magenta(figlet.textSync('BYE', 'Alpha')));
+        }
+    }
+
+    startClassification() {
+        log.silly('startClassification()');
+        const classifier = new Classifier();
+        classifier.startClassification()
+            .then(() => this.startCLI());
+    }
+    
+    startAutoTagRemoval() {
+        log.silly('startAutoTagRemoval()');
+        const credentials = this.credentialManager.getCredentials();
+        Promise.resolve()
+            .then(() => this.getEmail(credentials.email))
+            .then(email => credentials.email = email)
+            .then(() => this.getPassword(credentials.password))
+            .then(password => credentials.password = password)
+            .then(() => this.startEditLoop(credentials))
+            .catch(() => {
+                console.log(chalk.bgRed('\n\nLogin failed.\n'));
+                return this.startCLI()
+            });
+    }
+
+    getEmail(email) {
+        log.silly('getEmail()', {email});
+        if (email) {
+            return email;
+        } else {
+            let mail;
+            return this.cli.getEmail()
+                .then(result => mail = result.email)
+                .then(() => this.credentialManager.saveMail(mail))
+                .then(() => mail);
+        }
+    }
+
+    getPassword(password) {
+        log.silly('getPassword()', {length: password ? password.length : 'undefined'});
+        if (password) {
+            return password;
+        } else {
+            return this.cli.getPassword()
+                .then(result => {
+                    const password = result.password;
+                    if (result.savepassword) {
+                        this.credentialManager.savePassword(password);
+                    }
+                    return password;
+                })
+        }
+    }
+
+    startEditLoop(credentials) {
+        log.silly('startEditLoop()', {email: credentials.email});
+        this.cli.cancelAutoRemoval()
+            .then(() => editLoop.cancel())
+            .then(() => console.log('\n'))
+            .then(() => this.startCLI());
+            
+        const editLoop = new EditLoop();
+        return editLoop.init(credentials.email, credentials.password)
+            .then(() => editLoop.startEditing());
     }
 
 }
