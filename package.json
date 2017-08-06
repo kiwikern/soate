@@ -4,7 +4,7 @@
   "description": "utility tool to remove tags from questions where both tags 'angular' and 'angularjs' are used but only one version is referenced.",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js",
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
@@ -28,5 +28,14 @@
     "request": "^2.81.0",
     "selenium-webdriver": "^3.5.0",
     "winston": "^2.3.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kiwikern/soate.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kiwikern/soate/issues"
+  },
+  "homepage": "https://github.com/kiwikern/soate#readme"
 }
