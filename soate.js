@@ -6,6 +6,7 @@ const Classifier = require('./classifier');
 const EditLoop = require('./edit-loop');
 const CredentialsManager = require('./credentials-manager');
 const log = require('./logger').getLogger('Soate');
+const setLogLevel = require('./logger').setLogLevel;
 
 class Soate {
 
@@ -30,6 +31,7 @@ For each of them, mark one or none of the tags to be removed, then start auto re
     }
 
     startCLI() {
+        log.silly('startCLI()')
         this.cli.selectMode()
             .then(result => {
                 console.log('\n');
@@ -38,6 +40,7 @@ For each of them, mark one or none of the tags to be removed, then start auto re
     }
 
     selectMode(mode) {
+        log.silly('selectMode()')
         switch(mode) {
             case 'classification':
                 this.startClassification();
@@ -48,7 +51,10 @@ For each of them, mark one or none of the tags to be removed, then start auto re
             case 'reset':
                 this.credentialManager.resetCredentials();
                 this.startCLI();
-                break;  
+                break;
+            case 'loglevel':
+                  this.setLogLevel();
+                  break;
             case 'quit':
             default:
                 return console.log(chalk.magenta(figlet.textSync('BYE', 'Alpha')));
@@ -118,6 +124,13 @@ For each of them, mark one or none of the tags to be removed, then start auto re
             .then(() => editLoop.startEditing());
     }
 
+    setLogLevel() {
+        log.silly('setLoglevel()');
+        this.cli.setLogLevel()
+            .then(result => setLogLevel(result.loglevel))
+            .then(() => console.log('\n'))
+            .then(() => this.startCLI());
+    }
 }
 
 module.exports = Soate;

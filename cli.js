@@ -4,9 +4,10 @@ class CLI {
 
     selectMode() {
         const choices = [
+            {value:'classification', name:'Classify questions whether tag removal is neccessary.', short:'classify questions'},
             {value:'tagremoval', name:'Automatically remove tags from the questions you have classified.', short:'remove tags'}, 
-            {value:'classification', name:'Classify questions whether tag removal is neccessary.', short:'classify questions'}, 
             {value:'reset', name:'Reset your Stackoverflow credentials.', short:'reset credentials'}, 
+            {value:'loglevel', name:'Set loglevel.', short:'set loglevel'}, 
             {value:'quit', name:'Quit soate.', short:'quit'}
         ];
         const questions = [{
@@ -64,6 +65,16 @@ class CLI {
             message: 'Do you want to store (caution, cleartext!) your password locally?'
         }
     ];
+        return inquirer.prompt(questions);
+    }
+
+    setLogLevel() {
+        const questions = [{
+            name: 'loglevel',
+            type: 'list',
+            choices: ['silly', 'debug', 'warn'],
+            message: `What log level do you want to enable?`
+        }];
         return inquirer.prompt(questions);
     }
 }
