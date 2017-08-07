@@ -1,5 +1,5 @@
 {
-  "name": "so-angular-tag-editor",
+  "name": "soate",
   "version": "1.0.0",
   "description": "utility tool to remove tags from questions where both tags 'angular' and 'angularjs' are used but only one version is referenced.",
   "main": "index.js",
