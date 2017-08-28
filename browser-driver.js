@@ -42,7 +42,8 @@ class BrowserDriver {
 			.then(() => this.deleteTag(tagToBeDeleted))
 			.then(() => this.setSummary(tagToBeDeleted))
 			.then(() => this.submit())
-			.then(() => true)
+			.then(() => this.hasEditRestriction())
+			.then(() => this.wasSuccessful())
 			.catch(result => {
 				log.debug('editTag: caught rejection', {result});
 				return result;
@@ -89,7 +90,7 @@ class BrowserDriver {
 					return Promise.resolve();
 				} else {
 					log.debug('does not have both tags anymore.');
-					return Promise.reject(true);
+					return Promise.reject('not_both_tags');
 				}
 			});
 	}
@@ -111,13 +112,44 @@ class BrowserDriver {
 	}
 
 	submit() {
-		log.debug('submit');
+		log.debug('submit()');
 		return this.driver.findElement(By.id('submit-button')).click();
 	}
 
 	close() {
 		log.debug('close()')
 		this.driver.close();
+	}
+
+	hasEditRestriction() {
+		log.silly('hasEditRestriction()');
+		return this.driver.wait(until.elementLocated(By.css('.message-text')),1000 /*ms*/)
+			.then(() => this.driver.findElement(By.css('.message-text')))
+			.then(div => div.getText())
+			.then(text => {
+				log.silly('hasEditRestriction(): found edit restriction', {text});
+				if (text.includes('You can perform this action again')) {
+					return Promise.reject('edit_restriction');
+				} else {
+					return Promise.reject('skip');
+				}
+			})
+			.catch(error => {
+				log.silly('hasEditRestriction(): caught rejection', {error});	
+				if ((error + '').includes('Timeout')) {
+					return Promise.resolve();
+				} else {
+					return Promise.reject(error);
+				}
+			});
+	}
+
+	wasSuccessful() {
+		log.silly('wasSuccessful()');
+		return this.driver.wait(until.elementLocated(By.css('blockquote')), 5000) 
+			.then(() => this.driver.findElement(By.css('blockquote')).getText())
+			.then(text => text.includes('Thanks for your edit'))
+			.then(wasSuccessful => wasSuccessful ? Promise.resolve('success') : Promise.reject('fail'));
 	}
 }
 

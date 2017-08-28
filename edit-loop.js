@@ -5,7 +5,7 @@ const Driver = require('./browser-driver');
 class EditLoop {
 
     constructor() {
-        log.debug('constructor()');
+        log.silly('constructor()');
         this.wasCanceled = false;
         this.classifications = this.getClassifications();
         this.count = 0;
@@ -14,17 +14,17 @@ class EditLoop {
     }
 
     init(email, password) {
-        log.debug('init()', {email});
+        log.silly('init()', {email});
         return this.driver.login(email, password).catch(() => Promise.reject());
     }
 
     startEditing() {
-        log.debug('startEditing()');
+        log.silly('startEditing()');
         if (this.wasCanceled) {
             log.debug('startEditing(): was cancelled');
             return;
         }
-        if (!Array.isArray(this.classifications) || this.classifications.length < 1) {
+        if (!Array.isArray(this.classifications) || this.classifications.length <= this.classificationIndex) {
             console.log('All classified questions were edited.');
             return;
         }
@@ -32,27 +32,42 @@ class EditLoop {
     }
 
     startLooping() {
-        log.debug('startLooping()', {count: this.count});
-        if (this.count > 10) {
+        log.silly('startLooping()', {count: this.count});
+        if (this.count > 40) {
             log.debug('startLooping(): count exceeded');
-            return this.setEditingTimeout();
+            return this.queueFullTimeout();
         }
         this.count++;
         return this.performEdits(this.classifications[this.classificationIndex])
             .then(() => this.startEditing())
-            .catch(() => this.setEditingTimeout());
+            .catch(reason => {
+                if (reason === 'retry') {
+                    return this.nextQuestionTimeout();
+                } else {
+                    return this.queueFullTimeout();
+                }
+            } 
+        );
     }
 
     performEdits(classification) {
-        log.debug('performEdits()', { classification });
+        log.silly('performEdits()', {classification});
         return this.driver.editQuestion(classification.id, classification.tagToBeRemoved)
             .then(isDone => {
                 if (isDone) {
-                    if (isDone !== 'skip') {
+                    log.debug('performEdits()', {isDone});
+                    if (isDone === 'success') {
                         console.log(`\nSuccessfully removed tag ${classification.tagToBeRemoved}.\n`);
                         this.removeFirstClassification(classification.id);
+                    } else if (isDone === 'not_both_tags') {
+                        console.log(`\nDoes not have both tags: ${classification.id}.\n`);
+                        this.removeFirstClassification(classification.id);
+                    } else if (isDone === 'edit_restriction') {
+                        console.log(`Found edit restriction. Retry in 30 seconds.`);
+                        return Promise.reject('retry')
                     } else {
-                        console.log('\nSkipped a question.\n')
+                        console.log(`\nSkipped question ${classification.id}. Will retry next time.\n`);
+                        this.incrementSkipCount(classification.id);
                         this.classificationIndex++;
                     }
                     return Promise.resolve();
@@ -63,10 +78,20 @@ class EditLoop {
             });
     }
 
-    setEditingTimeout() {
-        log.debug('setEditingTimeout()');
-        console.log('\nEdit queues are full. Retrying in 1h.\n')
+    nextQuestionTimeout() {
+        log.silly('nextQuestionTimeout()');
+        this.setEditingTimeout(30000);
+    }
+
+    queueFullTimeout() {
+        log.silly('queueFullTimeout()');
+        console.log('\nEdit queues are full. Retrying in 1h.\n');
         this.count = 0;
+        return this.setEditingTimeout(3600000);
+    }
+
+    setEditingTimeout(timeout = 1000) {
+        log.silly('setEditingTimeout()', {timeout});
         clearTimeout(this.timeout);
         if (this.wasCanceled) {
             log.debug('setEditingTimeout(): abort timeout')
@@ -85,12 +110,12 @@ class EditLoop {
                 clearInterval(interval);
                 this.startEditing();
                 return resolve();
-            }, 3600000);
+            }, timeout);
         });
     }
 
     getClassifications() {
-        log.debug('getClassifications()');
+        log.silly('getClassifications()');
         const path = './classifications.json';
         let classifications;
         if (fs.existsSync(path)) {
@@ -102,17 +127,28 @@ class EditLoop {
     }
 
     removeFirstClassification(classificationId) {
-        log.debug('removeFirstClassification()', {classificationId});
+        log.silly('removeFirstClassification()', {classificationId});
         if (this.classifications[this.classificationIndex] && this.classifications[this.classificationIndex].id === classificationId) {
-            const removed = this.classifications.splice(0, 1);
+            const removed = this.classifications.splice(this.classificationIndex, 1);
             log.debug('removeFirstClassification()', {removed});
             const path = './classifications.json';
             fs.writeFileSync(path, JSON.stringify(this.classifications, null, 4));
         }
     }
 
+    incrementSkipCount(classificationId) {
+        log.silly('incrementSkipCount()', {classificationId});
+        if (this.classifications[this.classificationIndex] && this.classifications[this.classificationIndex].id === classificationId) {
+            const newSkipCount = (this.classifications[this.classificationIndex].skipCount || 0) + 1;
+            this.classifications[this.classificationIndex].skipCount = newSkipCount;
+            log.debug('setSkipCount:', {newSkipCount});
+            const path = './classifications.json';
+            fs.writeFileSync(path, JSON.stringify(this.classifications, null, 4));
+        }
+    }
+
     cancel() {
-        log.debug('cancel()');
+        log.silly('cancel()');
         this.wasCanceled = true;
         this.driver.close();
         clearTimeout(this.timeout);
